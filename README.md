@@ -142,6 +142,24 @@ nyc_pipeline/
 +-- docker-compose.yml          Definition des 6 services Docker
 +-- README.md                   Ce fichier
 |
++-- Captures/
+|   +-- Dashboard Airflow.png        Interface Airflow avec les 2 DAGs
+|   +-- Dashboard MinIO.png          Bucket nyc-datalake avec les données
+|   +-- Dashboard Spark.png          Spark Master ALIVE avec 1 Worker
+|   +-- Docker Compose .png          Services Docker en cours d'exécution
+|   +-- Ingestion Taxi.png           Rapport final ingestion taxi (3/3 mois)
+|   +-- Ingestion Meteo.png          Rapport final ingestion météo (2184 fichiers)
+|   +-- Transformation Taxi Pyspark.png      Job Spark taxi - rapport final
+|   +-- Transformation Meteo Pyspark.png     Job Spark météo - rapport final
+|   +-- Rapport Final Transformation Taxi Pyspark.png    Résultats transformation taxi
+|   +-- Rapport Final Transformation Meteo Pyspark.png   Résultats transformation météo
+|   +-- dbt.png                      Résultats dbt run (PASS=5)
+|   +-- Tests.png                    Résultats dbt test (25/25 PASS)
+|   +-- Ajout des droits.png         Attribution droits PostgreSQL
+|   +-- base de données.png          Tables PostgreSQL avec les comptages
+|   +-- Verification des Tables.png  Vérification finale des 5 tables
+|   +-- analysis.pdf                 Export PDF du notebook d'analyse
+|
 +-- ingestion/
 |   +-- ingest_taxi.py          Telecharge Parquet TLC -> valide -> MinIO
 |   +-- ingest_weather.py       Genere JSON meteo simules -> MinIO
