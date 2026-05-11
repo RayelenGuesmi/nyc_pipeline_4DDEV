@@ -59,3 +59,5 @@ derby.log
 *.swo
 .DS_Store
 Thumbs.db
+
+dbt_project/.user.yml
