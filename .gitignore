@@ -1,0 +1,61 @@
+# =============================================================================
+# .gitignore — Fichiers à NE PAS versionner dans Git
+# =============================================================================
+#
+# PRINCIPE : On ne versionne jamais :
+#   1. Les secrets (mots de passe, clés API)
+#   2. Les données brutes (trop volumineuses pour Git)
+#   3. Les fichiers générés automatiquement (peuvent être recréés)
+#   4. Les fichiers locaux de l'IDE
+# =============================================================================
+
+# --- SECRETS (CRITIQUE - ne jamais versionner) ---
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# --- Données brutes (fichiers trop volumineux) ---
+*.parquet
+*.csv
+data/
+raw_data/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+env/
+.python-version
+
+# --- dbt (fichiers générés par dbt run) ---
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# --- Airflow (logs locaux) ---
+airflow/logs/
+logs/
+
+# --- Spark (fichiers temporaires) ---
+spark-warehouse/
+metastore_db/
+derby.log
+
+# --- IDE ---
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

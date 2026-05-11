@@ -1,0 +1,74 @@
+# =============================================================================
+# dbt_project.yml — Configuration principale du projet dbt
+# =============================================================================
+#
+# CE FICHIER EST OBLIGATOIRE : dbt le cherche à la racine du projet.
+# Il définit le nom du projet, les chemins, et la configuration des modèles.
+#
+# CONCEPT CLÉ — Les "modèles" dbt :
+#   Un modèle dbt = un fichier .sql contenant un SELECT.
+#   dbt transforme ce SELECT en CREATE TABLE ou CREATE VIEW automatiquement.
+#   On n'écrit jamais CREATE TABLE manuellement dans dbt.
+#
+# MATÉRIALISATIONS (comment dbt crée les modèles) :
+#   view  : CREATE VIEW — recalculé à chaque requête, pas de stockage.
+#           Rapide à créer, lent à interroger (relit les données source).
+#           → Idéal pour les staging (légères transformations).
+#
+#   table : CREATE TABLE AS SELECT — calculé une fois, stocké sur disque.
+#           Lent à créer, rapide à interroger.
+#           → Idéal pour les marts (tables finales volumineuses).
+#
+#   incremental : n'ajoute que les nouvelles lignes (pas de recalcul total).
+#                 Très efficace pour les grandes tables en production.
+#                 → Non utilisé ici (notre dataset est fixe).
+# =============================================================================
+
+name: nyc_pipeline          # Nom du projet dbt (doit être unique)
+version: '2.0.0'            # Version de notre projet
+config-version: 2           # Version du format de configuration dbt
+
+# Connexion à la base de données (définie dans profiles.yml)
+profile: nyc_pipeline
+
+# Chemins vers les dossiers du projet
+model-paths: ["models"]     # Dossier contenant les fichiers SQL
+seed-paths: ["seeds"]       # Données statiques CSV (non utilisé ici)
+test-paths: ["tests"]       # Tests SQL personnalisés
+macro-paths: ["macros"]     # Macros Jinja réutilisables
+snapshot-paths: ["snapshots"] # Snapshots (versioning de données)
+
+# Dossier où dbt stocke les fichiers compilés et les résultats
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+
+# =============================================================================
+# Configuration des modèles
+# =============================================================================
+# On définit ici la matérialisation PAR DÉFAUT pour chaque dossier.
+# Les modèles peuvent surcharger cette config avec {{ config(...) }}.
+#
+# STRUCTURE :
+#   models:
+#     nom_projet:     ← même valeur que 'name' ci-dessus
+#       dossier:
+#         +materialized: type
+# =============================================================================
+
+models:
+  nyc_pipeline:
+
+    # Modèles de staging : vues légères sur les tables brutes
+    # Elles "nettoient" et renomment les colonnes sans stocker de données.
+    staging:
+      +materialized: view     # Vue = pas de stockage, recalculé à chaque fois
+      +schema: raw            # Créé dans le schéma 'raw' de PostgreSQL
+
+    # Modèles de marts : tables agrégées et enrichies pour l'analyse
+    # Stockées physiquement pour des requêtes rapides.
+    marts:
+      +materialized: table    # Table = stocké, rapide à interroger
+      +schema: marts          # Créé dans le schéma 'marts' de PostgreSQL

@@ -1,0 +1,110 @@
+# =============================================================================
+# models/marts/schema.yml
+# Documentation et tests des modèles marts
+# =============================================================================
+#
+# CE FICHIER a deux rôles :
+#   1. DOCUMENTATION : décrit chaque modèle et colonne (visible dans dbt docs)
+#   2. TESTS DE QUALITÉ : dbt exécute ces tests avec "dbt test"
+#
+# TYPES DE TESTS dbt intégrés :
+#   - unique        : chaque valeur est unique dans la colonne
+#   - not_null      : aucune valeur NULL
+#   - accepted_values : valeurs dans une liste prédéfinie
+#   - relationships : clé étrangère valide (référentielle intégrité)
+#
+# Ces tests s'exécutent avec : dbt test
+# Un test échoué n'arrête pas le pipeline — il logue une erreur.
+# =============================================================================
+
+version: 2
+
+models:
+
+  # ── trip_enriched ──────────────────────────────────────────────────────────
+  - name: trip_enriched
+    description: >
+      Table principale enrichie : chaque trajet taxi avec sa météo.
+      Jointure LEFT entre stg_taxi_trips et stg_weather sur l'heure de prise en charge.
+      ~8,4 millions de lignes. Table de référence pour toutes les analyses.
+
+    columns:
+      - name: trip_id
+        description: "Identifiant unique du trajet (hérité de fact_taxi_trips)"
+        tests:
+          - unique
+          - not_null
+
+      - name: pickup_datetime
+        description: "Horodatage de la prise en charge (Jan-Mars 2024)"
+        tests:
+          - not_null
+
+      - name: weather_category
+        description: "Catégorie météo : Clair, Nuageux, Pluvieux, Orageux, Inconnu"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["Clair", "Nuageux", "Pluvieux", "Orageux", "Inconnu"]
+
+      - name: tip_percentage
+        description: "Pourboire en pourcentage du tarif de base (0-100+)"
+        tests:
+          - not_null
+
+      - name: distance_bucket
+        description: "Tranche de distance calculée par PySpark"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [">0-2km", "2-5km", ">5km"]
+
+
+  # ── trip_summary_per_hour ──────────────────────────────────────────────────
+  - name: trip_summary_per_hour
+    description: >
+      Agrégation horaire des trajets avec métriques météo.
+      Une ligne par combinaison (heure, date, météo).
+      ~2 000 lignes. Utilisé pour les analyses temporelles et les graphiques.
+
+    columns:
+      - name: pickup_hour
+        description: "Heure de prise en charge (0-23)"
+        tests:
+          - not_null
+
+      - name: trip_count
+        description: "Nombre de trajets dans cette heure/date/météo"
+        tests:
+          - not_null
+
+      - name: avg_tip_pct
+        description: "Pourboire moyen en % (carte de crédit incluse uniquement)"
+        tests:
+          - not_null
+
+
+  # ── high_value_customers ───────────────────────────────────────────────────
+  - name: high_value_customers
+    description: >
+      Zones de prise en charge à haute valeur commerciale.
+      Critères : >=10 trajets, >300$ total, pourboire moyen >15%.
+      ~70-80 zones sur les 263 zones TLC de NYC.
+      Paiements par carte de crédit uniquement (pourboires enregistrés).
+
+    columns:
+      - name: pickup_location_id
+        description: "Identifiant de zone TLC (1-263)"
+        tests:
+          - unique
+          - not_null
+
+      - name: total_spent
+        description: "Montant total dépensé dans cette zone ($ cumulé)"
+        tests:
+          - not_null
+
+      - name: trip_count
+        description: "Nombre de trajets depuis cette zone"
+        tests:
+          - not_null

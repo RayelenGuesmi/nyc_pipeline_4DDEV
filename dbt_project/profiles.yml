@@ -1,0 +1,39 @@
+# =============================================================================
+# profiles.yml — Connexions aux bases de données dbt
+# =============================================================================
+#
+# CE FICHIER contient les paramètres de connexion à PostgreSQL.
+# Il doit être dans le MÊME DOSSIER que dbt_project.yml quand on utilise
+# l'option --profiles-dir . (point = dossier courant).
+#
+# EN PRODUCTION, ce fichier serait dans ~/.dbt/profiles.yml (dossier home)
+# et NE SERAIT PAS versionné (contient les mots de passe).
+# Dans notre projet pédagogique, on le met dans dbt_project/ pour simplifier.
+#
+# STRUCTURE :
+#   nom_profil:          ← doit correspondre à 'profile' dans dbt_project.yml
+#     target: dev        ← environnement par défaut
+#     outputs:
+#       dev:             ← configuration de l'environnement de dev
+#         type: postgres
+#         ...
+# =============================================================================
+
+nyc_pipeline:           # Nom du profil (= profile dans dbt_project.yml)
+  target: dev           # Environnement utilisé par défaut
+
+  outputs:
+
+    # ── Environnement de développement ────────────────────────────────────
+    # On se connecte en localhost car dbt tourne sur VOTRE machine,
+    # pas dans Docker. Le port 5435 est exposé par docker-compose.
+    dev:
+      type: postgres
+      host: localhost
+      port: 5435
+      user: pipeline
+      password: pipeline
+      dbname: nyc_pipeline
+      schema: raw           # Schéma par défaut (surchargé par +schema dans dbt_project.yml)
+      threads: 4            # Nombre de modèles exécutés en parallèle
+      connect_timeout: 10   # Secondes avant abandon de connexion

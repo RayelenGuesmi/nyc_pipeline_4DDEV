@@ -1,0 +1,91 @@
+# =============================================================================
+# models/staging/sources.yml
+# Déclaration des tables sources (données brutes chargées par PySpark)
+# =============================================================================
+#
+# CONCEPT SOURCE dbt :
+#   Une "source" est une table qui existe déjà dans la base de données
+#   et que dbt ne gère pas (ne crée pas, ne modifie pas).
+#   On la déclare ici pour :
+#   1. Documenter d'où viennent les données
+#   2. Tester la qualité des données sources
+#   3. Utiliser la syntaxe {{ source('raw', 'fact_taxi_trips') }} dans les modèles
+#      au lieu de raw.fact_taxi_trips (plus maintenable)
+#
+# AVANTAGE DE {{ source(...) }} :
+#   Si un jour on renomme le schéma 'raw' en 'bronze' (convention Medallion),
+#   on ne change qu'ici — tous les modèles se mettent à jour automatiquement.
+# =============================================================================
+
+version: 2
+
+sources:
+  - name: raw                   # Alias utilisé dans les modèles : source('raw', ...)
+    description: >
+      Tables brutes chargées par PySpark depuis le Data Lake MinIO.
+      Ces tables contiennent les données transformées mais non agrégées.
+    database: nyc_pipeline       # Base de données PostgreSQL
+    schema: raw                  # Schéma PostgreSQL
+
+    tables:
+
+      # ── Table des trajets taxi ───────────────────────────────────────────
+      - name: fact_taxi_trips
+        description: >
+          Trajets Yellow Taxi NYC Jan-Mars 2024.
+          Source originale : TLC (Taxi & Limousine Commission).
+          Transformé par PySpark : nettoyage, enrichissement, calcul de métriques.
+          8,4 millions de lignes valides après filtrage (11.5% rejetés).
+
+        columns:
+          - name: pickup_datetime
+            description: "Horodatage de la prise en charge (Jan-Mars 2024)"
+            tests:
+              - not_null
+
+          - name: trip_duration_minutes
+            description: "Durée du trajet en minutes (calculée par PySpark)"
+            tests:
+              - not_null
+
+          - name: distance_bucket
+            description: "Tranche de distance : 0-2km, 2-5km, >5km"
+            tests:
+              - not_null
+              - accepted_values:
+                  values: [">0-2km", "2-5km", ">5km"]
+
+          - name: payment_type
+            description: "Code du type de paiement TLC (1=CB, 2=Cash, ...)"
+            tests:
+              - not_null
+
+      # ── Table des observations météo ─────────────────────────────────────
+      - name: dim_weather
+        description: >
+          Observations météo NYC toutes les heures, Jan-Mars 2024.
+          Source : API OpenWeatherMap (données simulées pour le projet).
+          2 184 observations (90 jours × 24 heures).
+          Une seule observation par heure (contrainte UNIQUE sur observation_hour).
+
+        columns:
+          - name: observation_ts
+            description: "Horodatage exact de l'observation météo"
+            tests:
+              - not_null
+
+          - name: observation_hour
+            description: >
+              Heure tronquée (DATE_TRUNC 'hour').
+              Clé de jointure principale avec fact_taxi_trips :
+              DATE_TRUNC('hour', pickup_datetime) = observation_hour
+            tests:
+              - not_null
+              - unique        # Une seule observation par heure
+
+          - name: weather_category
+            description: "Catégorie simplifiée : Clair, Nuageux, Pluvieux, Orageux"
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["Clair", "Nuageux", "Pluvieux", "Orageux", "Autre"]
