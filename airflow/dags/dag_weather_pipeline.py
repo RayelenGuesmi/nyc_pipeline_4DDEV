@@ -83,7 +83,7 @@ def ingest_weather_data(**context):
     if not success:
         raise Exception("L'ingestion météo a échoué — vérifiez les logs.")
 
-    print(f"✅ Ingestion météo terminée (exécution : {context['ds']})")
+    print(f" Ingestion météo terminée (exécution : {context['ds']})")
 
 
 def verify_weather_data(**context):
@@ -123,8 +123,8 @@ def verify_weather_data(**context):
 
     conn.close()
 
-    print(f"📊 Observations météo : {count}")
-    print("📊 Distribution météo :")
+    print(f" Observations météo : {count}")
+    print(" Distribution météo :")
     for cat, nb in categories:
         print(f"   {cat:10s} : {nb}")
 
@@ -137,7 +137,7 @@ def verify_weather_data(**context):
             "Attendu : ~2184 (90 jours × 24 heures)."
         )
 
-    print(f"✅ Vérification météo OK : {count} observations chargées.")
+    print(f" Vérification météo OK : {count} observations chargées.")
 
 
 # =============================================================================
